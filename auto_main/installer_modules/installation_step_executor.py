@@ -6,6 +6,7 @@ Brain Module System v4.0
 
 import time
 import subprocess
+import os
 from typing import Callable, Optional, List
 import traceback
 
@@ -254,10 +255,82 @@ class InstallationStepExecutor:
             self._update_progress(0, f"2단계 실패: {str(e)}")
             return False
 
+    def execute_step_2_5(self) -> bool:
+        """
+        Execute Step 2.5: Python 3.12 automatic installation
+        Progress: 40% ~ 50%
+        """
+        try:
+            # Progress update: 40%
+            self._update_progress(40, "Python 3.12 설치 여부 확인 중...")
+
+            # 1. Check if Python is already installed
+            if self.status_checker.is_python_installed():
+                python_version = self.status_checker.get_python_version()
+                self._log(f"Python이 이미 설치되어 있습니다: {python_version}")
+                self._update_progress(50, f"Python {python_version} 이미 설치됨")
+                time.sleep(1)
+                return True
+
+            # Progress update: 42%
+            self._update_progress(42, "Python 3.12 설치 시작...")
+            self._log("Python 3.12 설치를 시작합니다...")
+
+            # 2. Install Python via package manager
+            success, message = self.installer.install_python()
+
+            if not success:
+                error_msg = f"Python 설치 실패: {message}"
+                self._log(error_msg)
+                self._update_progress(50, "Python 설치 실패")
+                return False
+
+            self._log("Python 설치 완료")
+
+            # Progress update: 45%
+            self._update_progress(45, "Python PATH 설정 중...")
+
+            # 3. Add Python to PATH
+            python_paths = [
+                r"C:\Python312",
+                r"C:\Python312\Scripts"
+            ]
+
+            if add_to_path_immediate(python_paths):
+                self._log("Python PATH 설정 완료")
+            else:
+                self._log("Python PATH 설정에 문제가 있을 수 있습니다")
+
+            # Progress update: 47%
+            self._update_progress(47, "Python 설치 검증 중...")
+            time.sleep(2)  # Wait for PATH to be applied
+
+            # 4. Verify Python installation using helper method
+            if not self._ensure_tool_in_path('Python', python_paths, 'python'):
+                self._log("[WARNING] Python PATH 설정에 문제가 있을 수 있습니다")
+
+            # Final verification
+            if self.status_checker.is_python_installed():
+                python_version = self.status_checker.get_python_version()
+                self._log(f"Python 설치 검증 완료 - 버전: {python_version}")
+                self._update_progress(50, f"Python {python_version} 설치 완료!")
+                time.sleep(1)
+                return True
+            else:
+                self._log("Python 설치 검증 실패")
+                self._update_progress(50, "Python 검증 실패")
+                return False
+
+        except Exception as e:
+            error_msg = f"Step 2.5 (Python 설치) 오류: {str(e)}"
+            self._log(error_msg)
+            self._update_progress(50, "Python 설치 중 오류 발생")
+            return False
+
     def execute_step_3(self) -> bool:
         """Execute Step 3: Git automatic installation"""
         try:
-            self._update_progress(45, "3단계: Git 설치 및 PATH 설정 - Git 상태 확인...")
+            self._update_progress(55, "3단계: Git 설치 및 PATH 설정 - Git 상태 확인...")
 
             # Git 설치 여부 확인
             if self.status_checker.is_git_installed():
@@ -267,7 +340,7 @@ class InstallationStepExecutor:
                     self._log(f"현재 Git 버전: {git_version}")
 
                 # PATH 확인 및 조건부 추가
-                self._update_progress(55, "Git PATH 확인 중...")
+                self._update_progress(60, "Git PATH 확인 중...")
                 git_paths = [
                     r"C:\Program Files\Git\cmd",
                     r"C:\Program Files\Git\bin",
@@ -279,11 +352,11 @@ class InstallationStepExecutor:
                 else:
                     self._log("[WARNING] Git PATH 설정에 문제가 있을 수 있습니다")
 
-                self._update_progress(60, "3단계 완료: Git 사용 준비됨")
+                self._update_progress(65, "3단계 완료: Git 사용 준비됨")
                 return True
 
             # Git 설치 시작
-            self._update_progress(48, "Git 설치를 시작합니다...")
+            self._update_progress(57, "Git 설치를 시작합니다...")
             success, message = self.installer.install_git(method='chocolatey')
 
             if not success:
@@ -294,7 +367,7 @@ class InstallationStepExecutor:
             self._log("Git 설치 완료")
 
             # Git PATH 설정
-            self._update_progress(55, "Git PATH 설정 중...")
+            self._update_progress(60, "Git PATH 설정 중...")
             git_paths = [
                 r"C:\Program Files\Git\cmd",
                 r"C:\Program Files\Git\bin",
@@ -307,12 +380,12 @@ class InstallationStepExecutor:
                 self._log("Git PATH 설정에 문제가 있을 수 있습니다")
 
             # 설치 검증
-            self._update_progress(58, "Git 설치 검증 중...")
+            self._update_progress(63, "Git 설치 검증 중...")
             if self.status_checker.is_git_installed():
                 git_version = self.status_checker.get_git_version()
                 self._log(f"Git 설치 검증 완료 - 버전: {git_version}")
 
-            self._update_progress(60, "3단계 완료: Git 설치 및 PATH 설정 완료")
+            self._update_progress(65, "3단계 완료: Git 설치 및 PATH 설정 완료")
             return True
 
         except Exception as e:
@@ -323,7 +396,7 @@ class InstallationStepExecutor:
     def execute_step_4(self) -> bool:
         """Execute Step 4: Node.js automatic installation"""
         try:
-            self._update_progress(65, "4단계: Node.js 설치 및 PATH 설정 - Node.js 상태 확인...")
+            self._update_progress(70, "4단계: Node.js 설치 및 PATH 설정 - Node.js 상태 확인...")
 
             # Node.js 설치 여부 확인
             if self.status_checker.is_nodejs_installed():
@@ -336,7 +409,7 @@ class InstallationStepExecutor:
                     self._log(f"현재 npm 버전: {npm_version}")
 
                 # npm PATH 확인 및 조건부 추가
-                self._update_progress(75, "npm 글로벌 경로 확인 중...")
+                self._update_progress(77, "npm 글로벌 경로 확인 중...")
                 import os
                 npm_path = os.path.join(os.environ.get('APPDATA', ''), 'npm')
 
@@ -349,7 +422,7 @@ class InstallationStepExecutor:
                 return True
 
             # Node.js 설치 시작
-            self._update_progress(68, "Node.js 설치를 시작합니다...")
+            self._update_progress(72, "Node.js 설치를 시작합니다...")
             success, message = self.installer.install_nodejs(method='chocolatey')
 
             if not success:
@@ -360,7 +433,7 @@ class InstallationStepExecutor:
             self._log("Node.js 설치 완료")
 
             # Node.js PATH 설정 (System PATH로 통합)
-            self._update_progress(75, "Node.js PATH 설정 중...")
+            self._update_progress(77, "Node.js PATH 설정 중...")
 
             # npm 글로벌 경로를 실제 경로로 확장
             import os
@@ -387,7 +460,7 @@ class InstallationStepExecutor:
                 return False  # 설치 중단!
 
             # 설치 검증
-            self._update_progress(78, "Node.js 설치 검증 중...")
+            self._update_progress(79, "Node.js 설치 검증 중...")
             time.sleep(2)  # PATH 반영 대기
 
             if self.status_checker.is_nodejs_installed():
@@ -408,7 +481,7 @@ class InstallationStepExecutor:
     def execute_step_5(self) -> bool:
         """Execute Step 5: Claude CLI installation"""
         try:
-            self._update_progress(80, "5단계: Claude CLI 설치 및 PATH 설정 - Claude CLI 상태 확인...")
+            self._update_progress(82, "5단계: Claude CLI 설치 및 PATH 설정 - Claude CLI 상태 확인...")
 
             # Claude CLI 설치 여부 확인
             if self.status_checker.is_claude_cli_installed():
@@ -426,7 +499,7 @@ class InstallationStepExecutor:
                     self._log("[WARNING] Claude CLI PATH 확인 필요 - npm 경로 설정을 확인하세요")
             else:
                 # Claude CLI 설치 시작
-                self._update_progress(81, "Claude Code CLI 설치를 시작합니다...")
+                self._update_progress(83, "Claude Code CLI 설치를 시작합니다...")
                 success, message = self.installer.install_claude_cli()
 
                 if not success:
@@ -436,7 +509,7 @@ class InstallationStepExecutor:
 
                 self._log("Claude Code CLI 설치 완료")
 
-            self._update_progress(83, "5단계 완료: Claude CLI 설치 완료")
+            self._update_progress(85, "5단계 완료: Claude CLI 설치 완료")
             return True
 
         except Exception as e:
@@ -447,7 +520,7 @@ class InstallationStepExecutor:
     def execute_step_6(self) -> bool:
         """Execute Step 6: Gemini CLI installation and final verification"""
         try:
-            self._update_progress(85, "6단계: Gemini CLI 설치 및 최종 검증 - Gemini CLI 상태 확인...")
+            self._update_progress(87, "6단계: Gemini CLI 설치 및 최종 검증 - Gemini CLI 상태 확인...")
 
             # Gemini CLI 설치 여부 확인
             if self.status_checker.is_gemini_cli_installed():
@@ -465,7 +538,7 @@ class InstallationStepExecutor:
                     self._log("[WARNING] Gemini CLI PATH 확인 필요 - npm 경로 설정을 확인하세요")
             else:
                 # Gemini CLI 설치 시작
-                self._update_progress(88, "Gemini CLI 설치를 시작합니다...")
+                self._update_progress(90, "Gemini CLI 설치를 시작합니다...")
                 success, message = self.installer.install_gemini_cli()
 
                 if not success:
@@ -476,7 +549,7 @@ class InstallationStepExecutor:
                 self._log("Gemini CLI 설치 완료")
 
             # 전체 PATH 검증
-            self._update_progress(92, "전체 도구 PATH 검증 시작...")
+            self._update_progress(93, "전체 도구 PATH 검증 시작...")
             results = self.path_verifier.verify_all_silent()
 
             # 검증 결과 출력 (실행 성공 시 메시지 없음, 실패 시만 경고)
@@ -510,7 +583,11 @@ class InstallationStepExecutor:
                 installed_tools.append("Gemini CLI")
 
             self._log(f"설치된 도구: {', '.join(installed_tools)}")
-            self._update_progress(100, "설치 완료!")
+            self._update_progress(100, "모든 설치 완료!")
+            self._log("All installations completed successfully!")
+
+            # 최종 완료 메시지 표시 (NEW)
+            self._show_final_completion_message()
 
             # VSCode 터미널 자동 최적화
             self._optimize_vscode_terminal()
@@ -521,6 +598,108 @@ class InstallationStepExecutor:
             self._log(f"6단계 오류: {str(e)}")
             self._update_progress(0, f"6단계 실패: {str(e)}")
             return False
+
+    def _get_tool_version(self, tool_name: str) -> Optional[str]:
+        """
+        Get version of installed tool
+
+        Args:
+            tool_name: Tool name ('python', 'git', 'node', 'npm', 'claude', 'gemini')
+
+        Returns:
+            Version string or None if not installed
+        """
+        try:
+            if tool_name == 'python':
+                return self.status_checker.get_python_version()
+            elif tool_name == 'git':
+                return self.status_checker.get_git_version()
+            elif tool_name == 'node':
+                return self.status_checker.get_nodejs_version()
+            elif tool_name == 'npm':
+                # npm version check
+                result = subprocess.run(
+                    ['npm', '-v'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                )
+                if result.returncode == 0:
+                    return result.stdout.strip()
+            elif tool_name == 'claude':
+                # Claude CLI version check
+                result = subprocess.run(
+                    ['claude', '--version'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                )
+                if result.returncode == 0:
+                    return result.stdout.strip()
+            elif tool_name == 'gemini':
+                # Gemini CLI version check
+                result = subprocess.run(
+                    ['gemini', '--version'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                )
+                if result.returncode == 0:
+                    return result.stdout.strip()
+        except Exception:
+            pass
+
+        return None
+
+    def _show_final_completion_message(self):
+        """Show final completion message with all installed tool versions"""
+
+        # Collect all tool versions
+        tools = {
+            'Python': self._get_tool_version('python'),
+            'Git': self._get_tool_version('git'),
+            'Node.js': self._get_tool_version('node'),
+            'npm': self._get_tool_version('npm'),
+            'Claude CLI': self._get_tool_version('claude'),
+            'Gemini CLI': self._get_tool_version('gemini')
+        }
+
+        # Build message
+        separator = '=' * 50
+        message = f"\n{separator}\n"
+        message += "AI 개발 환경 설치 완료!\n"
+        message += f"{separator}\n\n"
+        message += "설치된 도구 버전:\n"
+
+        for tool, version in tools.items():
+            if version:
+                status = '\u2713'  # Checkmark
+                ver = version
+            else:
+                status = '\u2717'  # X mark
+                ver = '미설치'
+            message += f"  {status} {tool}: {ver}\n"
+
+        message += f"\n{separator}\n"
+        message += "다음 단계 (VSCode 사용자)\n"
+        message += f"{separator}\n\n"
+        message += "1. VSCode 재시작\n\n"
+        message += "2. 터미널에서 버전 확인:\n"
+        message += "   python --version\n"
+        message += "   git --version\n"
+        message += "   npm -v\n"
+        message += "   node -v\n\n"
+        message += "3. Python Extension 설치:\n"
+        message += "   Ctrl+Shift+X -> 'Python' 검색\n"
+        message += "   또는 명령어:\n"
+        message += "   code --install-extension ms-python.python\n\n"
+        message += "모든 준비 완료! 즐거운 개발 되세요!\n"
+        message += f"{separator}\n"
+
+        self._log(message)
 
     def _optimize_vscode_terminal(self):
         """VSCode 터미널 PATH 자동 최적화"""

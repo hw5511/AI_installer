@@ -102,6 +102,8 @@ class VSCodeSettingsManager:
 
             # 필수 경로 정의
             required_paths = [
+                r'C:\Python312',
+                r'C:\Python312\Scripts',
                 r'C:\Program Files\Git\cmd',
                 r'C:\Program Files\Git\bin',
                 r'C:\Program Files\nodejs',

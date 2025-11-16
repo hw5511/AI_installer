@@ -11,6 +11,7 @@ Brain Module System v4.0
 CHOCOLATEY_COMMANDS = {
     'install_git': ['choco', 'install', 'git', '-y', '--no-progress'],
     'install_nodejs': ['choco', 'install', 'nodejs', '-y', '--no-progress'],
+    'install_python': ['choco', 'install', 'python312', '-y', '--no-progress'],
     'version_check': ['choco', '--version'],
     'refresh_env': 'refreshenv'
 }
@@ -23,7 +24,8 @@ WINGET_COMMANDS = {
     'install_nodejs': [
         'winget', 'install', '--id', 'OpenJS.NodeJS',
         '-e', '--silent', '--accept-package-agreements', '--accept-source-agreements'
-    ]
+    ],
+    'install_python': ['winget', 'install', 'Python.Python.3.12', '-e', '--silent']
 }
 
 # =============================================================================
@@ -63,7 +65,8 @@ VERSION_CHECK_COMMANDS = {
     'node': ['node', '--version'],
     'npm': ['npm', '--version'],
     'claude': ['claude', '--version'],
-    'choco': ['choco', '--version']
+    'choco': ['choco', '--version'],
+    'python': ['python', '--version']
 }
 
 # =============================================================================

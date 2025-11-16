@@ -7,6 +7,16 @@ Brain Module System v4.0
 import os
 
 # =============================================================================
+# PYTHON PATHS
+# =============================================================================
+
+# Python paths
+PYTHON_PATHS = [
+    r"C:\Python312",
+    r"C:\Python312\Scripts"
+]
+
+# =============================================================================
 # TIMEOUT CONFIGURATIONS
 # =============================================================================
 
@@ -58,6 +68,13 @@ PACKAGE_CONFIGS = {
         'display_name': 'NPM 패키지 관리자',
         'install_color': '#CB3837',
         'uninstall_color': '#A52A2A'
+    },
+    'python': {
+        'choco_name': 'python312',
+        'winget_id': 'Python.Python.3.12',
+        'display_name': 'Python 3.12',
+        'install_color': '#3776AB',
+        'uninstall_color': '#2C5F8D'
     }
 }
 
@@ -136,6 +153,7 @@ CONFIG_PATHS = {
 # =============================================================================
 
 __all__ = [
+    'PYTHON_PATHS',
     'TIMEOUT_SECONDS',
     'COMMAND_TIMEOUTS',
     'PACKAGE_CONFIGS',

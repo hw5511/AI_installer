@@ -21,7 +21,8 @@ class AutoInstaller:
 
     완전 자동화된 설치 프로세스:
     1. Chocolatey 설치 및 즉시 적용 (0-20%)
-    2. Chocolatey 감지 확인 (20-40%)
+    2. Chocolatey 감지 확인 (20-35%)
+    2.5. Python 자동 설치 및 PATH 설정 (35-40%)
     3. Git 자동 설치 및 PATH 설정 (40-60%)
     4. Node.js 자동 설치 및 PATH 설정 (60-80%)
     5. Claude CLI 설치 및 검증 (80-90%)
@@ -99,15 +100,16 @@ class AutoInstaller:
 
             # 6단계 순차 실행
             steps = [
-                (self.step_executor.execute_step_1, "Step 1: Chocolatey 설치"),
-                (self.step_executor.execute_step_2, "Step 2: Chocolatey 감지"),
-                (self.step_executor.execute_step_3, "Step 3: Git 설치"),
-                (self.step_executor.execute_step_4, "Step 4: Node.js 설치"),
-                (self.step_executor.execute_step_5, "Step 5: Claude CLI 설치"),
-                (self.step_executor.execute_step_6, "Step 6: Gemini CLI 설치 및 검증")
+                (self.step_executor.execute_step_1, "Step 1: Chocolatey 설치", True),
+                (self.step_executor.execute_step_2, "Step 2: Chocolatey 감지", True),
+                (self.step_executor.execute_step_2_5, "Step 2.5: Python 설치", False),  # 실패해도 계속 진행
+                (self.step_executor.execute_step_3, "Step 3: Git 설치", True),
+                (self.step_executor.execute_step_4, "Step 4: Node.js 설치", True),
+                (self.step_executor.execute_step_5, "Step 5: Claude CLI 설치", True),
+                (self.step_executor.execute_step_6, "Step 6: Gemini CLI 설치 및 검증", True)
             ]
 
-            for step_func, step_name in steps:
+            for step_func, step_name, is_critical in steps:
                 if self.stop_requested:
                     self._log(f"{step_name}에서 설치가 중단되었습니다.")
                     self._update_progress(0, "설치가 중단되었습니다")
@@ -116,9 +118,13 @@ class AutoInstaller:
                 success = step_func()
 
                 if not success:
-                    self._log(f"{step_name} 실행 실패!")
-                    self._update_progress(0, f"{step_name} 실패")
-                    return
+                    if is_critical:
+                        self._log(f"{step_name} 실행 실패!")
+                        self._update_progress(0, f"{step_name} 실패")
+                        return
+                    else:
+                        self._log(f"{step_name} 실패했지만 설치를 계속 진행합니다...")
+                        continue
 
             # 완료
             self._log("=" * 50)

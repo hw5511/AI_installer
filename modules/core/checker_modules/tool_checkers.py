@@ -260,3 +260,45 @@ class PackageManagerChecker:
         from .checker_utils import check_command_exists
         exists, version = check_command_exists('winget --version')
         return version if exists else None
+
+
+class PythonChecker:
+    """Python installation checker"""
+
+    def __init__(self, config=None):
+        from modules.core.config import Config
+        self.config = config or Config()
+
+    def is_installed(self) -> bool:
+        """Check if Python is installed"""
+        try:
+            timeout = self.config.get_timeout('command_check')
+            creationflags = _config.get_subprocess_flags() if _config else 0
+            result = subprocess.run(
+                ['python', '--version'],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                creationflags=creationflags
+            )
+            return result.returncode == 0
+        except:
+            return False
+
+    def get_version(self) -> Optional[str]:
+        """Get Python version"""
+        try:
+            timeout = self.config.get_timeout('command_check')
+            creationflags = _config.get_subprocess_flags() if _config else 0
+            result = subprocess.run(
+                ['python', '--version'],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                creationflags=creationflags
+            )
+            if result.returncode == 0:
+                return result.stdout.strip().replace('Python ', '')
+            return None
+        except:
+            return None
