@@ -1,0 +1,64 @@
+"""
+Config Modules Package
+Brain Module System v4.0
+"""
+
+from .config_constants import (
+    TIMEOUT_SECONDS,
+    COMMAND_TIMEOUTS,
+    PACKAGE_CONFIGS,
+    TOOL_NAMES,
+    GIT_PATHS,
+    NODEJS_PATHS,
+    CHOCOLATEY_PATHS,
+    ENVIRONMENT_VARIABLES,
+    REGISTRY_SETTINGS,
+    CONFIG_PATHS
+)
+from .config_commands import (
+    CHOCOLATEY_COMMANDS,
+    WINGET_COMMANDS,
+    NPM_COMMANDS,
+    POWERSHELL_COMMANDS,
+    VERSION_CHECK_COMMANDS,
+    INSTALL_COMMANDS,
+    SHELL_REQUIRED_COMMANDS
+)
+from .config_ui import (
+    WINDOW_CONFIG,
+    UI_LAYOUT
+)
+from .config_messages import (
+    SUCCESS_MESSAGES,
+    ERROR_MESSAGES,
+    INFO_MESSAGES
+)
+
+__all__ = [
+    # Constants
+    'TIMEOUT_SECONDS',
+    'COMMAND_TIMEOUTS',
+    'PACKAGE_CONFIGS',
+    'TOOL_NAMES',
+    'GIT_PATHS',
+    'NODEJS_PATHS',
+    'CHOCOLATEY_PATHS',
+    'ENVIRONMENT_VARIABLES',
+    'REGISTRY_SETTINGS',
+    'CONFIG_PATHS',
+    # Commands
+    'CHOCOLATEY_COMMANDS',
+    'WINGET_COMMANDS',
+    'NPM_COMMANDS',
+    'POWERSHELL_COMMANDS',
+    'VERSION_CHECK_COMMANDS',
+    'INSTALL_COMMANDS',
+    'SHELL_REQUIRED_COMMANDS',
+    # UI
+    'WINDOW_CONFIG',
+    'UI_LAYOUT',
+    # Messages
+    'SUCCESS_MESSAGES',
+    'ERROR_MESSAGES',
+    'INFO_MESSAGES'
+]
