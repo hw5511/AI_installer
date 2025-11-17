@@ -53,9 +53,9 @@ class SoftwareInstaller:
             )
 
             if result.returncode == 0:
-                return True, result.stdout.strip()
+                return True, result.stdout.strip() if result.stdout else ""
             else:
-                error_msg = result.stderr.strip() or result.stdout.strip()
+                error_msg = (result.stderr.strip() if result.stderr else "") or (result.stdout.strip() if result.stdout else "Unknown error")
                 return False, error_msg
 
         except subprocess.TimeoutExpired:
@@ -110,7 +110,7 @@ class SoftwareInstaller:
         """
         self._log(f"Chocolatey를 사용하여 {package_name}를 설치하는 중...")
 
-        cmd = ['choco', 'install', package_name, '-y', '--no-progress']
+        cmd = ['choco', 'install', package_name, '-y', '--no-progress', '--ignore-detected-reboot']
 
         success, message = self.execute_command(
             cmd,
