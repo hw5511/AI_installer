@@ -21,8 +21,7 @@ class AutoInstaller:
 
     완전 자동화된 설치 프로세스:
     1. Chocolatey 설치 및 즉시 적용 (0-20%)
-    2. Chocolatey 감지 확인 (20-35%)
-    2.5. Python 자동 설치 및 PATH 설정 (35-40%)
+    2. Chocolatey 감지 확인 (20-40%)
     3. Git 자동 설치 및 PATH 설정 (40-60%)
     4. Node.js 자동 설치 및 PATH 설정 (60-80%)
     5. Claude CLI 설치 및 검증 (80-90%)
@@ -102,7 +101,6 @@ class AutoInstaller:
             steps = [
                 (self.step_executor.execute_step_1, "Step 1: Chocolatey 설치", True),
                 (self.step_executor.execute_step_2, "Step 2: Chocolatey 감지", True),
-                (self.step_executor.execute_step_2_5, "Step 2.5: Python 설치", False),  # 실패해도 계속 진행
                 (self.step_executor.execute_step_3, "Step 3: Git 설치", True),
                 (self.step_executor.execute_step_4, "Step 4: Node.js 설치", True),
                 (self.step_executor.execute_step_5, "Step 5: Claude CLI 설치", True),

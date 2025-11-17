@@ -9,7 +9,7 @@ from modules.core.exceptions import ToolCheckError
 
 # Import from separated modules
 from .checker_modules.checker_utils import check_command_exists
-from .checker_modules.tool_checkers import GitChecker, NodeJsChecker, PackageManagerChecker, PythonChecker
+from .checker_modules.tool_checkers import GitChecker, NodeJsChecker, PackageManagerChecker
 from .checker_modules.cli_checkers import ClaudeCliChecker, GeminiCliChecker
 from .checker_modules.system_explorer import SystemExplorer
 
@@ -35,7 +35,6 @@ class StatusChecker:
         self.git_checker = GitChecker(self.config)
         self.nodejs_checker = NodeJsChecker(self.config)
         self.pm_checker = PackageManagerChecker(self.config)
-        self.python_checker = PythonChecker(self.config)
         self.claude_checker = ClaudeCliChecker()
         self.gemini_checker = GeminiCliChecker()
         self.system_explorer = SystemExplorer()
@@ -57,15 +56,6 @@ class StatusChecker:
     def get_nodejs_version(self) -> Optional[str]:
         """Delegate to NodeJsChecker"""
         return self.nodejs_checker.get_version()
-
-    # Python delegation methods
-    def is_python_installed(self) -> bool:
-        """Delegate to PythonChecker"""
-        return self.python_checker.is_installed()
-
-    def get_python_version(self) -> Optional[str]:
-        """Delegate to PythonChecker"""
-        return self.python_checker.get_version()
 
     # npm delegation methods
     def is_npm_installed(self) -> bool:
@@ -176,7 +166,6 @@ class StatusChecker:
         git_installed = self.is_git_installed()
         nodejs_installed = self.is_nodejs_installed()
         npm_installed = self.is_npm_installed()
-        python_installed = self.is_python_installed()
         claude_installed = self.is_claude_cli_installed()
         gemini_installed = self.is_gemini_cli_installed()
         choco_installed = self.is_chocolatey_installed()
@@ -202,11 +191,6 @@ class StatusChecker:
                 'version': self.get_npm_version() if npm_installed else None,
                 'available': npm_installed
             },
-            'python': {
-                'installed': python_installed,
-                'version': self.get_python_version() if python_installed else None,
-                'available': python_installed
-            },
             'claude': {
                 'installed': claude_installed,
                 'version': self.get_claude_cli_version() if claude_installed else None,
@@ -223,12 +207,11 @@ class StatusChecker:
                 'available': winget_installed
             },
             'summary': {
-                'total_checked': 8,
+                'total_checked': 7,
                 'installed_count': sum([
                     git_installed,
                     nodejs_installed,
                     npm_installed,
-                    python_installed,
                     claude_installed,
                     gemini_installed,
                     choco_installed,
@@ -238,7 +221,6 @@ class StatusChecker:
                     git_installed,
                     nodejs_installed,
                     npm_installed,
-                    python_installed,
                     claude_installed,
                     gemini_installed
                 ])  # Core tools only
@@ -279,7 +261,7 @@ def main():
         print("-" * 40)
 
         # Show individual tool status
-        tools = ['choco', 'git', 'nodejs', 'npm', 'python', 'claude', 'winget']
+        tools = ['choco', 'git', 'nodejs', 'npm', 'claude', 'winget']
         for tool in tools:
             tool_status = status[tool]
             status_symbol = "OK" if tool_status['installed'] else "X"
@@ -290,7 +272,7 @@ def main():
         if status['summary']['all_installed']:
             print("모든 핵심 개발 도구가 설치되었습니다!")
         else:
-            missing_tools = [tool for tool in ['git', 'nodejs', 'npm', 'python', 'claude']
+            missing_tools = [tool for tool in ['git', 'nodejs', 'npm', 'claude']
                             if not status[tool]['installed']]
             print(f"누락된 핵심 도구: {', '.join(missing_tools)}")
         print("=" * 60)

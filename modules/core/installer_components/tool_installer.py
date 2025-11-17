@@ -54,12 +54,6 @@ class ToolInstaller:
                 'software_name': 'nodejs',
                 'display_name': 'Node.js'
             },
-            'python': {
-                'winget_id': 'Python.Python.3.12',
-                'choco_name': 'python312',
-                'software_name': 'python',
-                'display_name': 'Python 3.12'
-            },
             'claude_cli': {
                 'npm_package': '@anthropic-ai/claude-code',
                 'software_name': 'claude',
@@ -174,49 +168,6 @@ class ToolInstaller:
                     return True, f"{config['display_name']}가 성공적으로 설치되었습니다. npm 상태: {npm_msg}"
                 else:
                     return False, f"{config['display_name']} 설치 문제: {nodejs_msg}"
-            else:
-                raise ToolInstallationError(f"{config['display_name']} 설치에 실패했습니다: {message}")
-
-        except Exception as e:
-            error_msg = f"{config['display_name']} 설치 오류: {str(e)}"
-            self._log(error_msg)
-            return False, error_msg
-
-    def install_python(self, method: str = 'auto') -> Tuple[bool, str]:
-        """
-        Install Python 3.12 via package manager
-
-        Args:
-            method: Installation method ('auto', 'winget', 'chocolatey')
-
-        Returns:
-            Tuple of (success: bool, message: str)
-        """
-        config = self.package_configs['python']
-
-        # Check if already installed
-        if self.verifier._check_software_installed(config['software_name']):
-            message = f"{config['display_name']}이 이미 설치되어 있습니다"
-            self._log(message)
-            return True, message
-
-        # Determine installation method
-        if method == 'auto':
-            method = self._auto_detect_package_manager()
-
-        # Install based on method
-        try:
-            if method == 'chocolatey' and self.pm_detector.check_chocolatey_available():
-                success, message = self.sw_installer.install_via_chocolatey(config['choco_name'])
-            elif method == 'winget' and self.pm_detector.check_winget_available():
-                success, message = self.sw_installer.install_via_winget(config['winget_id'])
-            else:
-                error_msg = f"설치 방법 '{method}'를 사용할 수 없습니다"
-                self._log(error_msg)
-                return False, error_msg
-
-            if success:
-                return self.verifier.verify_installation(config['software_name'])
             else:
                 raise ToolInstallationError(f"{config['display_name']} 설치에 실패했습니다: {message}")
 

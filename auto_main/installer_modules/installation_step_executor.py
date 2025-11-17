@@ -255,133 +255,6 @@ class InstallationStepExecutor:
             self._update_progress(0, f"2단계 실패: {str(e)}")
             return False
 
-    def execute_step_2_5(self) -> bool:
-        """
-        Execute Step 2.5: Python 3.12 automatic installation with fallback
-        Progress: 40% ~ 50%
-        Retry strategy: Chocolatey -> Winget (auto-fallback)
-        """
-        try:
-            # Progress update: 40%
-            self._update_progress(40, "Python 3.12 설치 여부 확인 중...")
-
-            # 1. Check if Python is already installed
-            if self.status_checker.is_python_installed():
-                python_version = self.status_checker.get_python_version()
-                self._log(f"Python이 이미 설치되어 있습니다: {python_version}")
-                self._update_progress(50, f"Python {python_version} 이미 설치됨")
-                time.sleep(1)
-                return True
-
-            # Progress update: 42%
-            self._update_progress(42, "Python 3.12 설치 시작...")
-            self._log("Python 3.12 설치를 시작합니다...")
-
-            # 2. Install Python with automatic fallback (Chocolatey -> Winget)
-            success = False
-            message = ""
-            installation_method = ""
-
-            # Try 1st method: Chocolatey (default for this project)
-            self._log("1차 시도: Chocolatey로 Python 설치 시도...")
-            success, message = self.installer.install_python(method='chocolatey')
-            installation_method = "Chocolatey"
-
-            # Fallback to Winget if Chocolatey failed
-            if not success:
-                self._log(f"Chocolatey 설치 실패: {message}")
-                self._log("2차 시도: Winget으로 Python 설치 재시도...")
-                self._update_progress(43, "Winget으로 재시도 중...")
-
-                success, message = self.installer.install_python(method='winget')
-                installation_method = "Winget"
-
-            # Both methods failed
-            if not success:
-                error_msg = f"Python 설치 실패 (Chocolatey, Winget 모두 실패): {message}"
-                self._log(error_msg)
-                self._log("[정보] 수동 설치 가이드:")
-                self._log("  1. https://www.python.org/downloads/ 방문")
-                self._log("  2. Python 3.12.x 다운로드 및 설치")
-                self._log("  3. 설치 시 'Add Python to PATH' 체크박스 선택")
-                self._update_progress(50, "Python 설치 실패 - 수동 설치 필요")
-
-                # Log detailed error if error_logger is available
-                if hasattr(self, 'error_logger') and self.error_logger:
-                    self.error_logger.add_error_detail(
-                        step="Step 2.5: Python Installation",
-                        error_message=f"Both Chocolatey and Winget failed: {message}",
-                        traceback_info=traceback.format_exc() if 'traceback' in dir() else "No traceback available"
-                    )
-
-                return False
-
-            self._log(f"Python 설치 완료 ({installation_method} 사용)")
-
-            # Progress update: 45%
-            self._update_progress(45, "Python PATH 설정 중...")
-
-            # 3. Add Python to PATH (with retry logic)
-            python_paths = [
-                r"C:\Python312",
-                r"C:\Python312\Scripts"
-            ]
-
-            path_retry_count = 0
-            max_path_retries = 2
-            path_success = False
-
-            while path_retry_count < max_path_retries and not path_success:
-                if add_to_path_immediate(python_paths):
-                    self._log("Python PATH 설정 완료")
-                    path_success = True
-                else:
-                    path_retry_count += 1
-                    if path_retry_count < max_path_retries:
-                        self._log(f"Python PATH 설정 재시도 중... ({path_retry_count}/{max_path_retries})")
-                        time.sleep(1)
-                    else:
-                        self._log("[WARNING] Python PATH 설정 실패 - 수동 설정 필요할 수 있음")
-
-            # Progress update: 47%
-            self._update_progress(47, "Python 설치 검증 중...")
-            time.sleep(2)  # Wait for PATH to be applied
-
-            # 4. Verify Python installation using helper method
-            if not self._ensure_tool_in_path('Python', python_paths, 'python'):
-                self._log("[WARNING] Python PATH 설정 검증 실패 - 터미널 재시작 필요할 수 있음")
-
-            # Final verification
-            if self.status_checker.is_python_installed():
-                python_version = self.status_checker.get_python_version()
-                self._log(f"Python 설치 검증 완료 - 버전: {python_version}")
-                self._update_progress(50, f"Python {python_version} 설치 완료!")
-                time.sleep(1)
-                return True
-            else:
-                # Installation succeeded but verification failed
-                # This might happen if PATH needs terminal restart
-                self._log("[WARNING] Python 설치는 완료되었으나 즉시 검증 실패")
-                self._log("[정보] 터미널 재시작 후 'python --version' 명령으로 확인하세요")
-                self._update_progress(50, "Python 설치 완료 (재시작 후 확인 필요)")
-                # Return True because installation succeeded
-                return True
-
-        except Exception as e:
-            error_msg = f"Step 2.5 (Python 설치) 오류: {str(e)}"
-            self._log(error_msg)
-            self._update_progress(50, "Python 설치 중 오류 발생")
-
-            # Log detailed error if error_logger is available
-            if hasattr(self, 'error_logger') and self.error_logger:
-                self.error_logger.add_error_detail(
-                    step="Step 2.5: Python Installation",
-                    error_message=str(e),
-                    traceback_info=traceback.format_exc()
-                )
-
-            return False
-
     def execute_step_3(self) -> bool:
         """Execute Step 3: Git automatic installation"""
         try:
@@ -659,15 +532,13 @@ class InstallationStepExecutor:
         Get version of installed tool
 
         Args:
-            tool_name: Tool name ('python', 'git', 'node', 'npm', 'claude', 'gemini')
+            tool_name: Tool name ('git', 'node', 'npm', 'claude', 'gemini')
 
         Returns:
             Version string or None if not installed
         """
         try:
-            if tool_name == 'python':
-                return self.status_checker.get_python_version()
-            elif tool_name == 'git':
+            if tool_name == 'git':
                 return self.status_checker.get_git_version()
             elif tool_name == 'node':
                 return self.status_checker.get_nodejs_version()
@@ -714,7 +585,6 @@ class InstallationStepExecutor:
 
         # Collect all tool versions
         tools = {
-            'Python': self._get_tool_version('python'),
             'Git': self._get_tool_version('git'),
             'Node.js': self._get_tool_version('node'),
             'npm': self._get_tool_version('npm'),
@@ -743,14 +613,11 @@ class InstallationStepExecutor:
         message += f"{separator}\n\n"
         message += "1. VSCode 재시작\n\n"
         message += "2. 터미널에서 버전 확인:\n"
-        message += "   python --version\n"
         message += "   git --version\n"
+        message += "   node -v\n"
         message += "   npm -v\n"
-        message += "   node -v\n\n"
-        message += "3. Python Extension 설치:\n"
-        message += "   Ctrl+Shift+X -> 'Python' 검색\n"
-        message += "   또는 명령어:\n"
-        message += "   code --install-extension ms-python.python\n\n"
+        message += "   claude --version\n"
+        message += "   gemini --version\n\n"
         message += "모든 준비 완료! 즐거운 개발 되세요!\n"
         message += f"{separator}\n"
 

@@ -66,18 +66,6 @@ class Installer:
         """
         return self.tool_installer.install_nodejs(method)
 
-    def install_python(self, method: str = 'auto') -> Tuple[bool, str]:
-        """
-        Install Python 3.12 via package manager (Facade)
-
-        Args:
-            method: Installation method ('auto', 'winget', 'chocolatey')
-
-        Returns:
-            Tuple of (success: bool, message: str)
-        """
-        return self.tool_installer.install_python(method)
-
     def install_claude_cli(self) -> Tuple[bool, str]:
         """
         Install Claude CLI via npm
@@ -123,7 +111,6 @@ class Installer:
             'git': self.verifier._check_software_installed('git'),
             'nodejs': self.verifier._check_software_installed('nodejs'),
             'npm': self.verifier._check_software_installed('npm'),
-            'python': self.verifier._check_software_installed('python'),
             'claude': self.verifier._check_software_installed('claude'),
             'gemini': self.verifier._check_software_installed('gemini')
         }
