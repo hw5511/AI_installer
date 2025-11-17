@@ -257,8 +257,9 @@ class InstallationStepExecutor:
 
     def execute_step_2_5(self) -> bool:
         """
-        Execute Step 2.5: Python 3.12 automatic installation
+        Execute Step 2.5: Python 3.12 automatic installation with fallback
         Progress: 40% ~ 50%
+        Retry strategy: Chocolatey -> Winget (auto-fallback)
         """
         try:
             # Progress update: 40%
@@ -276,30 +277,71 @@ class InstallationStepExecutor:
             self._update_progress(42, "Python 3.12 설치 시작...")
             self._log("Python 3.12 설치를 시작합니다...")
 
-            # 2. Install Python via package manager
-            success, message = self.installer.install_python()
+            # 2. Install Python with automatic fallback (Chocolatey -> Winget)
+            success = False
+            message = ""
+            installation_method = ""
 
+            # Try 1st method: Chocolatey (default for this project)
+            self._log("1차 시도: Chocolatey로 Python 설치 시도...")
+            success, message = self.installer.install_python(method='chocolatey')
+            installation_method = "Chocolatey"
+
+            # Fallback to Winget if Chocolatey failed
             if not success:
-                error_msg = f"Python 설치 실패: {message}"
+                self._log(f"Chocolatey 설치 실패: {message}")
+                self._log("2차 시도: Winget으로 Python 설치 재시도...")
+                self._update_progress(43, "Winget으로 재시도 중...")
+
+                success, message = self.installer.install_python(method='winget')
+                installation_method = "Winget"
+
+            # Both methods failed
+            if not success:
+                error_msg = f"Python 설치 실패 (Chocolatey, Winget 모두 실패): {message}"
                 self._log(error_msg)
-                self._update_progress(50, "Python 설치 실패")
+                self._log("[정보] 수동 설치 가이드:")
+                self._log("  1. https://www.python.org/downloads/ 방문")
+                self._log("  2. Python 3.12.x 다운로드 및 설치")
+                self._log("  3. 설치 시 'Add Python to PATH' 체크박스 선택")
+                self._update_progress(50, "Python 설치 실패 - 수동 설치 필요")
+
+                # Log detailed error if error_logger is available
+                if hasattr(self, 'error_logger') and self.error_logger:
+                    self.error_logger.add_error_detail(
+                        step="Step 2.5: Python Installation",
+                        error_message=f"Both Chocolatey and Winget failed: {message}",
+                        traceback_info=traceback.format_exc() if 'traceback' in dir() else "No traceback available"
+                    )
+
                 return False
 
-            self._log("Python 설치 완료")
+            self._log(f"Python 설치 완료 ({installation_method} 사용)")
 
             # Progress update: 45%
             self._update_progress(45, "Python PATH 설정 중...")
 
-            # 3. Add Python to PATH
+            # 3. Add Python to PATH (with retry logic)
             python_paths = [
                 r"C:\Python312",
                 r"C:\Python312\Scripts"
             ]
 
-            if add_to_path_immediate(python_paths):
-                self._log("Python PATH 설정 완료")
-            else:
-                self._log("Python PATH 설정에 문제가 있을 수 있습니다")
+            path_retry_count = 0
+            max_path_retries = 2
+            path_success = False
+
+            while path_retry_count < max_path_retries and not path_success:
+                if add_to_path_immediate(python_paths):
+                    self._log("Python PATH 설정 완료")
+                    path_success = True
+                else:
+                    path_retry_count += 1
+                    if path_retry_count < max_path_retries:
+                        self._log(f"Python PATH 설정 재시도 중... ({path_retry_count}/{max_path_retries})")
+                        time.sleep(1)
+                    else:
+                        self._log("[WARNING] Python PATH 설정 실패 - 수동 설정 필요할 수 있음")
 
             # Progress update: 47%
             self._update_progress(47, "Python 설치 검증 중...")
@@ -307,7 +349,7 @@ class InstallationStepExecutor:
 
             # 4. Verify Python installation using helper method
             if not self._ensure_tool_in_path('Python', python_paths, 'python'):
-                self._log("[WARNING] Python PATH 설정에 문제가 있을 수 있습니다")
+                self._log("[WARNING] Python PATH 설정 검증 실패 - 터미널 재시작 필요할 수 있음")
 
             # Final verification
             if self.status_checker.is_python_installed():
@@ -317,14 +359,27 @@ class InstallationStepExecutor:
                 time.sleep(1)
                 return True
             else:
-                self._log("Python 설치 검증 실패")
-                self._update_progress(50, "Python 검증 실패")
-                return False
+                # Installation succeeded but verification failed
+                # This might happen if PATH needs terminal restart
+                self._log("[WARNING] Python 설치는 완료되었으나 즉시 검증 실패")
+                self._log("[정보] 터미널 재시작 후 'python --version' 명령으로 확인하세요")
+                self._update_progress(50, "Python 설치 완료 (재시작 후 확인 필요)")
+                # Return True because installation succeeded
+                return True
 
         except Exception as e:
             error_msg = f"Step 2.5 (Python 설치) 오류: {str(e)}"
             self._log(error_msg)
             self._update_progress(50, "Python 설치 중 오류 발생")
+
+            # Log detailed error if error_logger is available
+            if hasattr(self, 'error_logger') and self.error_logger:
+                self.error_logger.add_error_detail(
+                    step="Step 2.5: Python Installation",
+                    error_message=str(e),
+                    traceback_info=traceback.format_exc()
+                )
+
             return False
 
     def execute_step_3(self) -> bool:

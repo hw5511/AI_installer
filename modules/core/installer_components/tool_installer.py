@@ -206,10 +206,10 @@ class ToolInstaller:
 
         # Install based on method
         try:
-            if method == 'winget' and self.pm_detector.check_winget_available():
-                success, message = self.sw_installer.install_via_winget(config['winget_id'])
-            elif method == 'chocolatey' and self.pm_detector.check_chocolatey_available():
+            if method == 'chocolatey' and self.pm_detector.check_chocolatey_available():
                 success, message = self.sw_installer.install_via_chocolatey(config['choco_name'])
+            elif method == 'winget' and self.pm_detector.check_winget_available():
+                success, message = self.sw_installer.install_via_winget(config['winget_id'])
             else:
                 error_msg = f"설치 방법 '{method}'를 사용할 수 없습니다"
                 self._log(error_msg)
@@ -421,12 +421,12 @@ class ToolInstaller:
         self._log(f"[DEBUG]   Winget: {winget_available}")
         self._log(f"[DEBUG]   Chocolatey: {choco_available}")
 
-        if winget_available:
-            self._log("[DEBUG] Selected Winget for installation")
-            return 'winget'
-        elif choco_available:
+        if choco_available:
             self._log("[DEBUG] Selected Chocolatey for installation")
             return 'chocolatey'
+        elif winget_available:
+            self._log("[DEBUG] Selected Winget for installation")
+            return 'winget'
         else:
             # Try refreshing PATH and check again
             self._log("[DEBUG] No package manager found, attempting PATH refresh...")

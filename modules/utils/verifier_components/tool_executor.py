@@ -58,8 +58,8 @@ class ToolExecutor:
             )
 
             # Parse result
-            if result.returncode == 0 and 'NOTFOUND' not in result.stdout:
-                version = result.stdout.strip()
+            if result.returncode == 0 and result.stdout and 'NOTFOUND' not in result.stdout:
+                version = result.stdout.strip() if result.stdout else ''
                 return {
                     'tool': tool_name,
                     'status': 'success',
