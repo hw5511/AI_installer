@@ -73,16 +73,6 @@ class InstallationStepExecutor:
         try:
             # PowerShell 환경변수 갱신
             refresh_environment_variables()
-
-            # Chocolatey refreshenv 명령어 (무음 실행)
-            subprocess.run(
-                ['powershell', '-Command', 'refreshenv'],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                creationflags=subprocess.CREATE_NO_WINDOW
-            )
-
             self._log("환경변수가 갱신되었습니다")
 
         except Exception as e:
@@ -113,6 +103,11 @@ class InstallationStepExecutor:
 
         # 1단계: 현재 PATH에서 명령어 실행 시도
         self._log(f"{tool_name} PATH 확인 중...")
+
+        # 현재 프로세스 환경변수 갱신 및 복사
+        refresh_environment_variables()
+        env = os.environ.copy()
+
         try:
             result = subprocess.run(
                 [check_command, '--version'],
@@ -120,7 +115,8 @@ class InstallationStepExecutor:
                 text=True,
                 timeout=5,
                 shell=False,
-                creationflags=subprocess.CREATE_NO_WINDOW
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                env=env
             )
 
             if result.returncode == 0:
@@ -153,6 +149,10 @@ class InstallationStepExecutor:
         self._log(f"{tool_name} PATH 반영 대기 중...")
         time.sleep(2)
 
+        # 환경변수 다시 갱신
+        refresh_environment_variables()
+        env = os.environ.copy()
+
         try:
             result = subprocess.run(
                 [check_command, '--version'],
@@ -160,7 +160,8 @@ class InstallationStepExecutor:
                 text=True,
                 timeout=5,
                 shell=False,
-                creationflags=subprocess.CREATE_NO_WINDOW
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                env=env
             )
 
             if result.returncode == 0:
@@ -538,6 +539,10 @@ class InstallationStepExecutor:
             Version string or None if not installed
         """
         try:
+            # 환경변수 갱신 및 복사
+            refresh_environment_variables()
+            env = os.environ.copy()
+
             if tool_name == 'git':
                 return self.status_checker.get_git_version()
             elif tool_name == 'node':
@@ -549,7 +554,8 @@ class InstallationStepExecutor:
                     capture_output=True,
                     text=True,
                     timeout=5,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+                    env=env
                 )
                 if result.returncode == 0:
                     return result.stdout.strip()
@@ -560,7 +566,8 @@ class InstallationStepExecutor:
                     capture_output=True,
                     text=True,
                     timeout=5,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+                    env=env
                 )
                 if result.returncode == 0:
                     return result.stdout.strip()
@@ -571,7 +578,8 @@ class InstallationStepExecutor:
                     capture_output=True,
                     text=True,
                     timeout=5,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+                    env=env
                 )
                 if result.returncode == 0:
                     return result.stdout.strip()
