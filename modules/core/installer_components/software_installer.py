@@ -42,6 +42,11 @@ class SoftwareInstaller:
         timeout = timeout or self.config.TIMEOUT_SECONDS
 
         try:
+            # Refresh environment variables to ensure PATH is up-to-date
+            from modules.utils.env_utils import refresh_environment_variables
+            refresh_environment_variables()
+            env = os.environ.copy()
+
             creationflags = self.config.get_subprocess_flags()
             result = subprocess.run(
                 command,
@@ -49,7 +54,8 @@ class SoftwareInstaller:
                 text=True,
                 timeout=timeout,
                 shell=shell,
-                creationflags=creationflags
+                creationflags=creationflags,
+                env=env
             )
 
             if result.returncode == 0:
@@ -120,19 +126,6 @@ class SoftwareInstaller:
 
         if success:
             self._log(f"{package_name}가 Chocolatey를 통해 성공적으로 설치되었습니다!")
-
-            # Refresh environment variables for Chocolatey
-            try:
-                creationflags = self.config.get_subprocess_flags()
-                subprocess.run(
-                    'refreshenv',
-                    shell=True,
-                    timeout=self.config.COMMAND_TIMEOUTS['environment_refresh'],
-                    creationflags=creationflags
-                )
-            except:
-                pass
-
             return True, f"{package_name}가 Chocolatey를 통해 성공적으로 설치되었습니다"
         else:
             error_msg = f"Chocolatey를 통한 {package_name} 설치에 실패했습니다: {message}"
