@@ -43,7 +43,7 @@ class SoftwareInstaller:
 
         try:
             # Refresh environment variables to ensure PATH is up-to-date
-            from modules.utils.env_utils import refresh_environment_variables
+            from modules.utils.path_manager import refresh_environment_variables
             refresh_environment_variables()
             env = os.environ.copy()
 
