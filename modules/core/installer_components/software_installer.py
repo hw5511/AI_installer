@@ -132,6 +132,34 @@ class SoftwareInstaller:
             self._log(error_msg)
             return False, error_msg
 
+    def _get_powershell_path(self) -> str:
+        """
+        Get PowerShell executable path with fallback
+
+        Returns:
+            str: Path to PowerShell executable
+        """
+        # Primary path (most common)
+        primary_path = r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+        if os.path.exists(primary_path):
+            return primary_path
+
+        # Fallback: try to find via where command
+        try:
+            result = subprocess.run(
+                ['where', 'powershell'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return result.stdout.strip().split('\n')[0]
+        except Exception:
+            pass
+
+        # Last resort: just use 'powershell' and hope PATH works
+        return 'powershell'
+
     def install_chocolatey_itself(self) -> Tuple[bool, str]:
         """
         Install Chocolatey package manager
@@ -143,6 +171,10 @@ class SoftwareInstaller:
         self._log("몇 분 정도 소요될 수 있습니다...")
 
         try:
+            # Get PowerShell path (absolute path for reliability)
+            powershell_path = self._get_powershell_path()
+            self._log(f"PowerShell 경로: {powershell_path}")
+
             # PowerShell script to install Chocolatey
             install_script = """
             Set-ExecutionPolicy Bypass -Scope Process -Force;
@@ -151,7 +183,7 @@ class SoftwareInstaller:
             """
 
             # Run the installation command
-            cmd = ['powershell', '-ExecutionPolicy', 'Bypass', '-Command', install_script]
+            cmd = [powershell_path, '-ExecutionPolicy', 'Bypass', '-Command', install_script]
             success, message = self.execute_command(
                 cmd,
                 timeout=300  # 5 minutes timeout
